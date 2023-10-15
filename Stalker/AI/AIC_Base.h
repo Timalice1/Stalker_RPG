@@ -73,7 +73,7 @@ protected:
 
 	/*Handle character combat state (switch to attacking)*/
 	UFUNCTION(BlueprintCallable, Category = "States")
-	void SetStateAsCombat(ACharacter* Enemy);
+	void SetStateAsCombat(AActor* Enemy);
 	
 	/*Handle character investigating state*/
 	UFUNCTION(BlueprintCallable, Category = "States")

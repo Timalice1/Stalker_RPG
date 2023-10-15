@@ -65,9 +65,8 @@ void AAIC_Base::OnPossess(APawn* InPawn)
 /*Handle sensed actor*/
 void AAIC_Base::OnTargetPerceptionUpdated(AActor* TargetActor, FAIStimulus Stimulus)
 {
-	TSubclassOf<UAISense> _senseClass = UAIPerceptionSystem::GetSenseClassForStimulus(GetWorld(), Stimulus);
 
-	if (_senseClass->GetName() == "AISense_Sight")
+	if (UAIPerceptionSystem::GetSenseClassForStimulus(GetWorld(), Stimulus) == UAISense_Sight::StaticClass())
 		HandleSightSense(TargetActor, Stimulus);
 	else
 		SetStateAsInvestigating(Stimulus.StimulusLocation);
@@ -78,13 +77,15 @@ void AAIC_Base::HandleSightSense(AActor* SeenActor, FAIStimulus Stimulus)
 {
 	if (Stimulus.WasSuccessfullySensed()) {
 		if (Cast<ACharacter>(SeenActor))
-			SetStateAsCombat((ACharacter*)SeenActor);
+			/*TODO: Calculate relationships*/
+			SetStateAsCombat(SeenActor);
 		else
 			SetStateAsInvestigating(Stimulus.StimulusLocation);
 	}
 	else{
 		SetStateAsInvestigating(Stimulus.StimulusLocation);
 	}
+
 }
 
 /*Handle character passive state (roam, patrool, chill, etc.)*/
@@ -95,14 +96,13 @@ void AAIC_Base::SetStateAsPassive()
 }
 
 /*Handle character combat state (switch to attacking)*/
-void AAIC_Base::SetStateAsCombat(ACharacter* Enemy)
+void AAIC_Base::SetStateAsCombat(AActor* Enemy)
 {	
 	if (CurrentState == ECS_Combat ||
 		Enemy == nullptr) return;
 	
-	ActiveTarget = Enemy;
+	CurrentState = ECS_Combat;
 	BlackboardComponent->SetValueAsObject("AttackTarget", Enemy);
-	BlackboardComponent->SetValueAsEnum("CharacterState", ECS_Combat);
 }
 
 /*Handle character investigating state*/
