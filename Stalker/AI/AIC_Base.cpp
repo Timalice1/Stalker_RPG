@@ -65,6 +65,10 @@ void AAIC_Base::OnPossess(APawn* InPawn)
 /*Handle sensed actor*/
 void AAIC_Base::OnTargetPerceptionUpdated(AActor* TargetActor, FAIStimulus Stimulus)
 {
+	/**
+	* Check if character see other character, then handle sight sense
+	* Othervise, in case of damaging or hearing, set character state to investigating
+	*/
 
 	if (UAIPerceptionSystem::GetSenseClassForStimulus(GetWorld(), Stimulus) == UAISense_Sight::StaticClass())
 		HandleSightSense(TargetActor, Stimulus);
@@ -75,15 +79,26 @@ void AAIC_Base::OnTargetPerceptionUpdated(AActor* TargetActor, FAIStimulus Stimu
 /*Handle what to do with seen actor*/
 void AAIC_Base::HandleSightSense(AActor* SeenActor, FAIStimulus Stimulus)
 {
+	/*Actor seen*/
 	if (Stimulus.WasSuccessfullySensed()) {
-		if (Cast<ACharacter>(SeenActor))
-			/*TODO: Calculate relationships*/
-			SetStateAsCombat(SeenActor);
+		/**
+		* TODO: Calculate relationships
+		* In case of seen actor is character and is enemy, switch to combat.
+		* In case of friend or neytral, do nothing
+		* Else, start investigating stimulus location
+		*/
+	
+		ACharacter* _seenCharacter = Cast<ACharacter>(SeenActor);
+		if (_seenCharacter != nullptr)
+			SetStateAsCombat(_seenCharacter);
 		else
 			SetStateAsInvestigating(Stimulus.StimulusLocation);
 	}
+
+	/*Handle lost sight of actor*/
 	else{
-		SetStateAsInvestigating(Stimulus.StimulusLocation);
+		SetStateAsPassive();
+		//SetStateAsInvestigating(Stimulus.StimulusLocation);
 	}
 
 }
@@ -92,15 +107,17 @@ void AAIC_Base::HandleSightSense(AActor* SeenActor, FAIStimulus Stimulus)
 void AAIC_Base::SetStateAsPassive()
 {
 	if (CurrentState == ECS_Passive) return;
-	BlackboardComponent->SetValueAsEnum("CharacterState", ECS_Passive);
+	CurrentState = ECS_Passive;
 }
 
 /*Handle character combat state (switch to attacking)*/
 void AAIC_Base::SetStateAsCombat(AActor* Enemy)
 {	
+	/*Exit if character already in combat*/
 	if (CurrentState == ECS_Combat ||
 		Enemy == nullptr) return;
-	
+		
+	/*Change blackboard values*/
 	CurrentState = ECS_Combat;
 	BlackboardComponent->SetValueAsObject("AttackTarget", Enemy);
 }
@@ -108,9 +125,8 @@ void AAIC_Base::SetStateAsCombat(AActor* Enemy)
 /*Handle character investigating state*/
 void AAIC_Base::SetStateAsInvestigating(FVector InvestigationPoint)
 {
-	if (CurrentState == ECS_Investigating ||
-		CurrentState == ECS_Investigating) return;
+	if (CurrentState == ECS_Investigating) return;
 	
+	CurrentState = ECS_Investigating;
 	BlackboardComponent->SetValueAsVector("InvestigationPoint", InvestigationPoint);
-	BlackboardComponent->SetValueAsEnum("CharacterState", ECS_Investigating);
 }

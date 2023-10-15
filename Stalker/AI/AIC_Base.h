@@ -24,20 +24,18 @@ class STALKER_API AAIC_Base : public AAIController
 {
 	GENERATED_BODY()
 
-	
-private:
-
-	/*Active attack target*/
-	ACharacter* ActiveTarget;
-
 public:
 	AAIC_Base();
 
 	void OnPossess(APawn* Pawn) override;
 
 	/*Active character state*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "States")
+	UPROPERTY(BlueprintReadOnly, Category = "States")
 	TEnumAsByte<ECharacterStates> CurrentState;
+
+	/*Active attack target*/
+	UPROPERTY(BlueprintReadOnly, Category = "States | Combat")
+	ACharacter* ActiveTarget;
 
 /*Components*/
 protected:

@@ -10,8 +10,8 @@ AAICharacterBase::AAICharacterBase()
 
 	HeadSocketName = "Head";
 
-	WalkSpeed = 500.f;
-	RunSpeed = 1000.f;
+	WalkSpeed = 230.f;
+	RunSpeed = 500.f;
 }
 
 void AAICharacterBase::GetActorEyesViewPoint(FVector& Location, FRotator& Rotation) const
