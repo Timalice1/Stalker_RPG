@@ -1,13 +1,21 @@
 #include "AC_CharacterStats.h"
+#include "AC_PhysicsComponent.h"
 
 UAC_CharacterStats::UAC_CharacterStats()
 {
-	MaxHealth = 2000.f;
+	bIsAlive = true;
+	MaxHealth = 100.f;
 	MaxStamina = 1000.f;
 
 	RefreshStaminaSpeed = .4f;
 
-	bIsAlive = true;
+	/*Setup body parts damage default multipliers*/
+	LimbsDamageMultipliers.Add(EL_Head, 1.f);
+	LimbsDamageMultipliers.Add(EL_Torso, .8f);
+	LimbsDamageMultipliers.Add(EL_Arms, .4f);
+	LimbsDamageMultipliers.Add(EL_Legs, .4f);
+
+	DefaultMultiplier = .9f;
 }
 
 void UAC_CharacterStats::BeginPlay()
@@ -43,6 +51,7 @@ float UAC_CharacterStats::GetStaminaPercentage()
 	return CurrentStamina / MaxStamina;
 }
 
+
 int UAC_CharacterStats::GetCurrentLevel()
 {
 	return CurrentLevel;
@@ -50,16 +59,39 @@ int UAC_CharacterStats::GetCurrentLevel()
 
 #pragma endregion
 
-void UAC_CharacterStats::DecreaseHealth(float DamageValue)
+void UAC_CharacterStats::TakeDamage(float DamageAmount, FName HitBoneName, FVector HitDirection, float ImpulseStrenght)
 {
-	if (!bIsAlive) return;
+	if (!bIsAlive) 
+		return;
 
-	CurrentHealth -= DamageValue;
+	float _damageMultiplier = DefaultMultiplier;
+	/*
+	Get hited limb damage multiplier value,
+	or use default multiplier if limb not found
+	*/
+	if(Limbs.Num() != 0)
+		for (FLimbs _limb : Limbs) {
+			for (FName bone : _limb.Bones) {
+				if (bone == HitBoneName)
+					_damageMultiplier = *LimbsDamageMultipliers.Find(_limb.Limb);
+			}
+		}
+	/*
+	Calculate final damage amount using formula:
+	DamageAmount x (BoneDamageMultiplier - (BoneDamageMultiplier * BoneDefenceMultiplier)) 
+	*/
+	float _calculatedDamage = DamageAmount * _damageMultiplier;
+	CurrentHealth -= _calculatedDamage;
 
-	//Check if character still alive
+	/*Apply hit impulse to selected bone*/
+	UAC_PhysicsComponent* _physComponent = GetOwner()->GetComponentByClass<UAC_PhysicsComponent>();
+	_physComponent->AddImpulse(HitBoneName, HitDirection, ImpulseStrenght);
+
+	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Green, FString::Printf(TEXT("%f"), _calculatedDamage));
+
+	/*Check if character still alive
+	Call handler event on character death*/
 	bIsAlive = CurrentHealth > 0;
-
-	//Call handler event on character death
 	if (!bIsAlive) OnCharacterDeath.Broadcast();
 }
 

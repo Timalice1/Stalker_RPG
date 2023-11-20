@@ -35,7 +35,7 @@ public:
 
 	/*Active attack target*/
 	UPROPERTY(BlueprintReadOnly, Category = "States | Combat")
-	ACharacter* ActiveTarget;
+	AActor* ActiveTarget;
 
 /*Components*/
 protected:
@@ -79,4 +79,6 @@ protected:
 
 	/*Handle what to do with seen actor*/
 	void HandleSightSense(AActor* SeenActor, FAIStimulus Stimulus);
+
+	void HandleDamageSense(FAIStimulus Stimulus);
 };

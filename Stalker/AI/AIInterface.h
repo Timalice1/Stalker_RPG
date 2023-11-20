@@ -28,6 +28,15 @@ public:
 	void SetMovementState(EMovementState State);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
+	void GetCombatRanges(float& AttackRadius, float& DefendRadius);
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Combat")
+	void PrepareToAttack();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Combat")
+	bool GetIsPreparedToAttack();
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Combat")
 	void Attack();
 
 };
