@@ -1,6 +1,7 @@
 #include "AC_PhysicsComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include <Kismet/GameplayStatics.h>
+#include "AC_CharacterStats.h"
 
 UAC_PhysicsComponent::UAC_PhysicsComponent()
 {
@@ -27,13 +28,16 @@ void UAC_PhysicsComponent::BeginPlay()
 
 void UAC_PhysicsComponent::AddImpulse(FName BoneName, FVector Velocity, float ImpulseStrenght, float RecoverySpeed)
 {
-	//TODO: Disable recovery after death
-	GetWorld()->GetTimerManager().SetTimer(ImpulseTimer, this, &UAC_PhysicsComponent::DecreaseImpulse, RecoverySpeed, true);
-	ImpulseWeight+=2;
-
+	/*Add recovery only if character alive*/
+	UAC_CharacterStats* _stats = (UAC_CharacterStats*)GetOwner()->FindComponentByClass<UAC_CharacterStats>();
+	if (_stats != nullptr && _stats->IsAlive()) {
+		GetWorld()->GetTimerManager().SetTimer(ImpulseTimer, this, &UAC_PhysicsComponent::DecreaseImpulse, RecoverySpeed, true);
+		ImpulseWeight+=2;
+	}
+	
 	/*Enable mesh physic*/
 	Mesh->SetAllBodiesBelowSimulatePhysics(RootBoneName, true, false);
-	
+		
 	/*Check if bone is not root bone*/
 	BoneName = BoneName == RootBoneName ? "bip01_spine" : BoneName;
 

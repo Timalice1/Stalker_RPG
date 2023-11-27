@@ -17,7 +17,7 @@ enum ELimbs {
 };
 
 USTRUCT(BlueprintType) 
-struct FLimbs{
+struct FLimb{
 	
 	GENERATED_BODY()
 
@@ -29,7 +29,29 @@ struct FLimbs{
 
 };
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+USTRUCT(BlueprintType)
+struct FDamageInfo{
+
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, Category = "DamageSystem")
+	float DamageAmount;
+	
+	UPROPERTY(BlueprintReadWrite, Category = "DamageSystem")
+	FName HitBone;
+
+	UPROPERTY(BlueprintReadWrite, Category = "DamageSystem")
+	FVector ImpactPoint;
+
+	UPROPERTY(BlueprintReadWrite, Category = "DamageSystem")
+	FVector HitDirection;
+
+	UPROPERTY(BlueprintReadWrite, Category = "DamageSystem")
+	float ImpulseStrenght;
+
+};
+
+UCLASS(meta=(BlueprintSpawnableComponent))
 class STALKER_API UAC_CharacterStats : public UActorComponent
 {
 	GENERATED_BODY()
@@ -50,10 +72,10 @@ private:
 
 	bool bIsAlive;
 
-protected:
+public:
 	
 	UFUNCTION()
-	TArray<FName> GetMeshBones() const {
+	FORCEINLINE TArray<FName> GetMeshBones() const {
 		return Cast<ACharacter>(GetOwner())->GetMesh()->GetAllSocketNames();
 	};
 
@@ -67,15 +89,25 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0), Category = "Stamina")
 	float RefreshStaminaSpeed;
-	
-	UPROPERTY(BlueprintreadOnly, EditDefaultsOnly, Category = "DamageSystem")
-	TArray<FLimbs> Limbs;
+		
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "DamageSystem",
+		meta = (AllowPrivateAccess = "true"))
+	TArray<FLimb> Limbs;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "DamageSystem")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "DamageSystem",
+		meta = (ClampMin = .01f, ClampMax = 1.f))
 	TMap<TEnumAsByte<ELimbs>, float> LimbsDamageMultipliers;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "DamageSystem")
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "DamageSystem",
+		meta = (ClampMin = .0f, ClampMax = .9f))
+	TMap<TEnumAsByte<ELimbs>, float> LimbsProtectionModifiers;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "DamageSystem", 
+		meta = (ClampMin = .01f, ClampMax = 1.f))
 	float DefaultMultiplier;
+
+	UPROPERTY(EditDefaultsOnly, Category = "DamageSystem")
+	TSubclassOf<AActor> BloodFX_Class;
 
 /*Getters*/
 public:
@@ -99,13 +131,16 @@ public:
 	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Stamina")
 	float GetStaminaPercentage();
 
+	UFUNCTION(BlueprintCallable, Category = "BodyParts")
+	bool GetLimbByBone(FName BoneName, TEnumAsByte<ELimbs>& Limb);
+
 public:
 
 	UFUNCTION(BlueprintPure, BlueprintCallable)
 	bool IsAlive();
 	
 	UFUNCTION(BlueprintCallable, Category = "DamageSystem")
-	void TakeDamage(float DamageAmount, FName HitBoneName, FVector HitDirection, float ImpulseStrenght = 4000.f);
+	float TakeDamage(FDamageInfo DamageInfo);
 
 	UFUNCTION(BlueprintCallable, Category = "DamageSystem")
 	float Heal(float HealValue);
@@ -122,4 +157,5 @@ protected:
 	/*Called when character is death*/
 	UPROPERTY(BlueprintCallable, BlueprintAssignable)
 	FOnCharacterDeathDelegate OnCharacterDeath;
+
 };

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "AIC_Base.h"
@@ -23,14 +24,14 @@ public:
 
 	AAICharacterBase();
 
+	void BeginPlay() override;
+
 protected:
 	
 	/*Define character eyes socket*/
 	void GetActorEyesViewPoint(FVector& Location, FRotator& Rotation) const override;
 
-	/*Handling character taking any damage*/
-	//float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-
+	
 protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")

@@ -5,6 +5,7 @@ AAICharacterBase::AAICharacterBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	AIControllerClass = AAIC_Base::StaticClass();
 	
 	CharacterStats = CreateDefaultSubobject<UAC_CharacterStats>("CharacterStats");
 	PhysicsComponent = CreateDefaultSubobject<UAC_PhysicsComponent>("PhysicsComponent");
@@ -20,6 +21,7 @@ AAICharacterBase::AAICharacterBase()
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
 	/*Capsule collisions config*/
+	GetCapsuleComponent()->SetCollisionObjectType(ECC_WorldDynamic);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
@@ -27,17 +29,16 @@ AAICharacterBase::AAICharacterBase()
 
 }
 
+void AAICharacterBase::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
 void AAICharacterBase::GetActorEyesViewPoint(FVector& Location, FRotator& Rotation) const
 {
 	Location = GetMesh()->GetSocketLocation(HeadSocketName);
 	Rotation = GetMesh()->GetSocketRotation(HeadSocketName);
 }
-
-//float AAICharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
-//{
-//	CharacterStats->DecreaseHealth(DamageAmount);
-//	return DamageAmount;
-//}
 
 /*Change movement speed depends of movement state*/
 void AAICharacterBase::SetMovementState_Implementation(EMovementState State)
