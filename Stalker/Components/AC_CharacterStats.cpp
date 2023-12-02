@@ -1,7 +1,6 @@
 #include "AC_CharacterStats.h"
-#include "AC_PhysicsComponent.h"
+
 #include <Kismet/KismetMathLibrary.h>
-#include "UObject/ConstructorHelpers.h"
 
 UAC_CharacterStats::UAC_CharacterStats()
 {
@@ -105,24 +104,26 @@ float UAC_CharacterStats::TakeDamage(FDamageInfo DamageInfo)
 	
 	/*Apply protection modifiers to taken damage*/
 	_calculatedDamage -= _calculatedDamage * _protectionValue;
-	if(bIsAlive)
+	if (bIsAlive) {
 		CurrentHealth -= _calculatedDamage;
+		/**
+		Spawn blood fx
+		TODO: Depends of applied damage amount, and also current equipment (because on exo blood sprites might be look weird)
+		The more damage, the more blood
+		!!!Use phys materials for that!!!
+		*/
+		FVector _loc = DamageInfo.ImpactPoint;
+		FRotator _rot = UKismetMathLibrary::MakeRotFromX(DamageInfo.HitDirection * -1.f);
+		GetWorld()->SpawnActor<AActor>(ImpactFX_Class, _loc, _rot);
+	}
 
-	/**
-	Spawn blood fx
-	TODO:
-	Depends of applied damage amount, and also current equipment (because on exo blood sprites might be look weird)
-	The more damage, the more blood
-	!!!Use phys materials for that!!!
-	*/
-
-	FVector _loc = DamageInfo.ImpactPoint;
-	FRotator _rot = UKismetMathLibrary::MakeRotFromX(DamageInfo.HitDirection * -1.f);
-	GetWorld()->SpawnActor<AActor>(BloodFX_Class, _loc, _rot);
 	
 	/*Apply impulse to the hitted bone*/
+	/////////////////////////////////////////////////////////////////////
+	//Try to use a physics control component instead of phys animations//
+	/////////////////////////////////////////////////////////////////////
 	auto* _physComp = GetOwner()->FindComponentByClass<UAC_PhysicsComponent>();
-	_physComp->AddImpulse(DamageInfo.HitBone, DamageInfo.HitDirection, DamageInfo.ImpulseStrenght);
+	_physComp->AddImpulse(DamageInfo.HitBone, DamageInfo.HitDirection, DamageInfo.ImpulseStrenght, .001f);
 
 	/** 
 	TODO: 
@@ -155,4 +156,11 @@ float UAC_CharacterStats::RefreshStamina(float RefreshAmount)
 {
 	CurrentStamina = FMath::Clamp(CurrentStamina += RefreshAmount, 0, MaxStamina);
 	return CurrentStamina;
+}
+
+void UAC_CharacterStats::OnCharacterDeath_Event()
+{
+	ACharacter* _owner = Cast<ACharacter>(GetOwner());
+	UAC_PhysicsComponent* _physComp = _owner->FindComponentByClass<UAC_PhysicsComponent>();
+	_physComp->ToRagdoll();
 }

@@ -2,11 +2,15 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+
 #include "GameFramework/Character.h"
+#include "AC_PhysicsComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+
 #include "AC_CharacterStats.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCharacterDeathDelegate);
-
 
 UENUM(BlueprintType)
 enum ELimbs {
@@ -107,7 +111,7 @@ protected:
 	float DefaultMultiplier;
 
 	UPROPERTY(EditDefaultsOnly, Category = "DamageSystem")
-	TSubclassOf<AActor> BloodFX_Class;
+	TSubclassOf<AActor> ImpactFX_Class;
 
 /*Getters*/
 public:
@@ -157,5 +161,8 @@ protected:
 	/*Called when character is death*/
 	UPROPERTY(BlueprintCallable, BlueprintAssignable)
 	FOnCharacterDeathDelegate OnCharacterDeath;
+
+	UFUNCTION(BlueprintCallable)
+	void OnCharacterDeath_Event();
 
 };

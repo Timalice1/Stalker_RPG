@@ -63,8 +63,19 @@ void UAC_PhysicsComponent::DecreaseImpulse()
 		Mesh->SetAllBodiesBelowPhysicsBlendWeight(RootBoneName, fminf(ImpulseWeight, 1));
 }
 
+void UAC_PhysicsComponent::ToRagdoll()
+{
+	GetWorld()->GetTimerManager().ClearTimer(ImpulseTimer);
+	SetStrenghtMultiplyer(0.f);
+	Mesh->SetSimulatePhysics(true);
+}
+
 /*Overrides Physical animation component function*/
 void UAC_PhysicsComponent::SetStrenghtMultiplyer(float InStrenghtMultiplyer)
 {
 	PhysAnimComponent->SetStrengthMultiplyer(InStrenghtMultiplyer);
+}
+
+FName UAC_PhysicsComponent::GetRootBoneName() const{
+	return RootBoneName;
 }

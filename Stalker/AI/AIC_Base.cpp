@@ -76,7 +76,7 @@ void AAIC_Base::OnTargetPerceptionUpdated(AActor* TargetActor, FAIStimulus Stimu
 	* Othervise, in case of damaging or hearing, set character state to investigating
 	*/
 	if (UAIPerceptionSystem::GetSenseClassForStimulus(GetWorld(), Stimulus) == UAISense_Sight::StaticClass()) {
-		//HandleSightSense(TargetActor, Stimulus);
+		HandleSightSense(TargetActor, Stimulus);
 		return;
 	}
 	else if (UAIPerceptionSystem::GetSenseClassForStimulus(GetWorld(), Stimulus) == UAISense_Damage::StaticClass()) {

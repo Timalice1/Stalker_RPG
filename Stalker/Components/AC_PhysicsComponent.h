@@ -20,19 +20,29 @@ public:
 
 	UAC_PhysicsComponent();
 
+	UPROPERTY(BlueprintReadWrite, Category = "Variables")
+	FTimerHandle ImpulseTimer;
+
 public:
 
 	UFUNCTION()
 	void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable)
-	void AddImpulse(FName BoneName, FVector Velocity, float ImpulseStrenght = 2000.f, float RecoverySpeed = .01f);
+	void AddImpulse(FName BoneName, FVector Velocity, float ImpulseStrenght = 2000.f, float RecoverySpeed = .001f);
+
+	UFUNCTION()
+	void ToRagdoll();
 
 	UFUNCTION(BlueprintCallable)
 	void SetStrenghtMultiplyer(float InStrenghtMultiplyer);
 
+	UFUNCTION()
+	FName GetRootBoneName() const;
+
 private:
 
+	UFUNCTION()
 	void DecreaseImpulse();
 
 protected:
@@ -51,7 +61,4 @@ protected:
 
 	UPROPERTY()
 	USkeletalMeshComponent* Mesh;
-
-	UPROPERTY(BlueprintReadWrite, Category = "Variables")
-	FTimerHandle ImpulseTimer;
 };
