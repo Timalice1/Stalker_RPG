@@ -26,17 +26,28 @@ void UAC_PhysicsComponent::BeginPlay()
 	PhysAnimComponent->ApplyPhysicalAnimationProfileBelow(RootBoneName, PA_ProfileName, false);
 }
 
-void UAC_PhysicsComponent::AddImpulse(FName BoneName, FVector Velocity, float ImpulseStrenght, float RecoverySpeed)
+void UAC_PhysicsComponent::AddImpulse(FName BoneName, FVector Velocity, float ImpulseStrenght, float RecoverInterpolationSpeed)
 {
-	/*Add recovery only if character alive*/
 	UAC_CharacterStats* _stats = (UAC_CharacterStats*)GetOwner()->FindComponentByClass<UAC_CharacterStats>();
+	
+	/*Add recovery only if character alive*/
 	if (_stats != nullptr && _stats->IsAlive()) {
-		GetWorld()->GetTimerManager().SetTimer(ImpulseTimer, this, &UAC_PhysicsComponent::DecreaseImpulse, RecoverySpeed, true);
+
+		FTimerDelegate recoverImpulse_Delegate;
+		recoverImpulse_Delegate.BindUObject(this, &UAC_PhysicsComponent::DecreaseImpulse, RecoverInterpolationSpeed);
+
+		/*Start a recover impulse timer by delegate*/
+		GetWorld()->GetTimerManager().SetTimer(ImpulseTimer, recoverImpulse_Delegate, .01f, true);
 		ImpulseWeight+=2;
 	}
 	
-	/*Enable mesh physic*/
-	Mesh->SetAllBodiesBelowSimulatePhysics(RootBoneName, true, false);
+	/*Enable mesh physic from the bone, parent to hitted*/
+	FName ParentBone = Mesh->GetParentBone(BoneName);
+	FName bone = BoneName == RootBoneName?  
+		BoneName : ParentBone;
+	bool bIncludeSelf = (ParentBone != RootBoneName) && (bone != RootBoneName);
+
+	Mesh->SetAllBodiesBelowSimulatePhysics(bone, true, bIncludeSelf);
 		
 	/*Check if bone is not root bone*/
 	BoneName = BoneName == RootBoneName ? "bip01_spine" : BoneName;
@@ -47,15 +58,15 @@ void UAC_PhysicsComponent::AddImpulse(FName BoneName, FVector Velocity, float Im
 	Mesh->AddImpulse(Velocity, BoneName, true);
 }
 
-void UAC_PhysicsComponent::DecreaseImpulse()
+void UAC_PhysicsComponent::DecreaseImpulse(float InterpolationSpeed)
 {
 	/*Interpolate impulse blend weight every timer tick*/
-	ImpulseWeight = UKismetMathLibrary::FInterpTo(ImpulseWeight, 0.f, UGameplayStatics::GetWorldDeltaSeconds(GetWorld()), 1.f);
-	
+	ImpulseWeight = UKismetMathLibrary::FInterpTo(ImpulseWeight, 0.f, UGameplayStatics::GetWorldDeltaSeconds(GetWorld()), InterpolationSpeed);
+
 	if (ImpulseWeight <= 0.f) {
 		/*Disable physics and clear timer*/
 		ImpulseWeight = 0;
-		Mesh->SetAllBodiesBelowSimulatePhysics(RootBoneName, false, false);
+		Mesh->SetAllBodiesBelowSimulatePhysics(RootBoneName, false, true);
 		GetWorld()->GetTimerManager().ClearTimer(ImpulseTimer);
 	}
 	else

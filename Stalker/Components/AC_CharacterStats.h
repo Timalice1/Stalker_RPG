@@ -53,6 +53,9 @@ struct FDamageInfo{
 	UPROPERTY(BlueprintReadWrite, Category = "DamageSystem")
 	float ImpulseStrenght;
 
+	UPROPERTY(BlueprintReadWrite, Category = "DamageSystem")
+	float ImpusleRecoverSpeed = .1f;
+
 };
 
 UCLASS(meta=(BlueprintSpawnableComponent))
@@ -93,6 +96,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0), Category = "Stamina")
 	float RefreshStaminaSpeed;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0), Category = "Stamina")
+	float StaminaRefreshDelay;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0), Category = "Stamina")
+	float StaminaThresshold;
 		
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = "DamageSystem",
 		meta = (AllowPrivateAccess = "true"))
@@ -115,36 +124,64 @@ protected:
 
 /*Getters*/
 public:
+
+	UFUNCTION(BlueprintCallable)
+	bool IsAlive() const {
+		return bIsAlive;
+	};
+	
 	/*Return character current level*/
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Level")
-	int GetCurrentLevel();
+	UFUNCTION( BlueprintCallable, Category = "Level")
+	int GetCurrentLevel() const {
+		return CurrentLevel;
+	};
 
 	/*Return current health value*/
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Health")
-	float GetCurrentHealth();
+	UFUNCTION(BlueprintCallable, Category = "Health")
+	float GetCurrentHealth() const {
+		return CurrentHealth;
+	};
 
 	/*Return health value in percent*/
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Health")
-	float GetHealthPercentage();
+	UFUNCTION(BlueprintCallable, Category = "Health")
+	float GetHealthPercentage() const {
+		return CurrentHealth / MaxHealth;
+	};
 
 	/*Return current stamina value*/
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Stamina")
-	float GetCurrentStamina();
+	UFUNCTION(BlueprintCallable, Category = "Stamina")
+	float GetCurrentStamina() const {
+		return CurrentStamina;
+	};
+	
+	UFUNCTION(BlueprintCallable, Category = "Stamina")
+	float GetStaminaRefreshSpeed() const {
+		return RefreshStaminaSpeed;
+	};
+	
+	UFUNCTION(BlueprintCallable, Category = "Stamina")
+	float GetStaminaRefreshDelay() const {
+		return StaminaRefreshDelay;
+	};
 	
 	/*Return stamina value in percent*/
-	UFUNCTION(BlueprintPure, BlueprintCallable, Category = "Stamina")
-	float GetStaminaPercentage();
+	UFUNCTION(BlueprintCallable, Category = "Stamina")
+	float GetStaminaPercentage() const {
+		return CurrentStamina / MaxStamina;
+	};
+	
+	UFUNCTION(BlueprintCallable, Category = "Stamina")
+	float GetStaminaThresshold() const {
+		return StaminaThresshold;
+	};
 
 	UFUNCTION(BlueprintCallable, Category = "BodyParts")
 	bool GetLimbByBone(FName BoneName, TEnumAsByte<ELimbs>& Limb);
 
 public:
-
-	UFUNCTION(BlueprintPure, BlueprintCallable)
-	bool IsAlive();
 	
 	UFUNCTION(BlueprintCallable, Category = "DamageSystem")
-	float TakeDamage(FDamageInfo DamageInfo);
+	void TakeDamage(FDamageInfo DamageInfo);
 
 	UFUNCTION(BlueprintCallable, Category = "DamageSystem")
 	float Heal(float HealValue);

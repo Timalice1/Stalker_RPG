@@ -1,6 +1,8 @@
 #include "AC_CharacterStats.h"
-
 #include <Kismet/KismetMathLibrary.h>
+#include <Kismet/GameplayStatics.h>
+#include <AIController.h>
+#include <BrainComponent.h>
 
 UAC_CharacterStats::UAC_CharacterStats()
 {
@@ -31,41 +33,9 @@ void UAC_CharacterStats::BeginPlay()
 	CurrentStamina = MaxStamina;
 }
 
-#pragma region Getters/Setters
-
-bool UAC_CharacterStats::IsAlive()
-{
-	return bIsAlive;
-}
-
-float UAC_CharacterStats::GetCurrentHealth()
-{
-	return CurrentHealth;
-}
-
-float UAC_CharacterStats::GetHealthPercentage()
-{
-	return CurrentHealth/MaxHealth;
-}
-
-float UAC_CharacterStats::GetCurrentStamina()
-{
-	return CurrentStamina;
-}
-
-float UAC_CharacterStats::GetStaminaPercentage()
-{
-	return CurrentStamina / MaxStamina;
-}
-
-int UAC_CharacterStats::GetCurrentLevel()
-{
-	return CurrentLevel;
-}
-
 bool UAC_CharacterStats::GetLimbByBone(FName BoneName, TEnumAsByte<ELimbs>& Limb)
 {
-	if (Limbs.IsEmpty()) 
+	if (Limbs.IsEmpty())
 		return false;
 
 	for (FLimb limb : Limbs) {
@@ -80,9 +50,7 @@ bool UAC_CharacterStats::GetLimbByBone(FName BoneName, TEnumAsByte<ELimbs>& Limb
 	return false;
 }
 
-#pragma endregion
-
-float UAC_CharacterStats::TakeDamage(FDamageInfo DamageInfo)
+void UAC_CharacterStats::TakeDamage(FDamageInfo DamageInfo)
 {
 	/*
 	Get hited limb damage multiplier and protection value,
@@ -101,12 +69,13 @@ float UAC_CharacterStats::TakeDamage(FDamageInfo DamageInfo)
 	DamageAmount x (BoneDamageMultiplier - (BoneDamageMultiplier * BoneProtectionValue)) 
 	*/
 	float _calculatedDamage = DamageInfo.DamageAmount * _damageMultiplier;
-	
-	/*Apply protection modifiers to taken damage*/
 	_calculatedDamage -= _calculatedDamage * _protectionValue;
+	
+	//Apply calculated damage
 	if (bIsAlive) {
 		CurrentHealth -= _calculatedDamage;
-		/**
+		
+		/*
 		Spawn blood fx
 		TODO: Depends of applied damage amount, and also current equipment (because on exo blood sprites might be look weird)
 		The more damage, the more blood
@@ -117,16 +86,11 @@ float UAC_CharacterStats::TakeDamage(FDamageInfo DamageInfo)
 		GetWorld()->SpawnActor<AActor>(ImpactFX_Class, _loc, _rot);
 	}
 
-	
 	/*Apply impulse to the hitted bone*/
-	/////////////////////////////////////////////////////////////////////
-	//Try to use a physics control component instead of phys animations//
-	/////////////////////////////////////////////////////////////////////
 	auto* _physComp = GetOwner()->FindComponentByClass<UAC_PhysicsComponent>();
-	_physComp->AddImpulse(DamageInfo.HitBone, DamageInfo.HitDirection, DamageInfo.ImpulseStrenght, .001f);
+	_physComp->AddImpulse(DamageInfo.HitBone, DamageInfo.HitDirection, DamageInfo.ImpulseStrenght, DamageInfo.ImpusleRecoverSpeed);
 
-	/** 
-	TODO: 
+	/* TODO: 
 	If armor equipped, decrease durability value by some amount. 
 	Also decreases armor protection modifiers 
 	*/
@@ -134,9 +98,8 @@ float UAC_CharacterStats::TakeDamage(FDamageInfo DamageInfo)
 	/*Check if character still alive
 	Call handler event on character death*/
 	bIsAlive = CurrentHealth > 0;
-	if (!bIsAlive) OnCharacterDeath.Broadcast();
-
-	return _calculatedDamage;
+	if (!bIsAlive) 
+		OnCharacterDeath.Broadcast();
 }
 
 float UAC_CharacterStats::Heal(float HealValue)
@@ -154,7 +117,7 @@ float UAC_CharacterStats::DrainStamina(float DrainAmount)
 
 float UAC_CharacterStats::RefreshStamina(float RefreshAmount)
 {
-	CurrentStamina = FMath::Clamp(CurrentStamina += RefreshAmount, 0, MaxStamina);
+	CurrentStamina = FMath::Clamp(CurrentStamina += RefreshAmount, 0.f, MaxStamina);
 	return CurrentStamina;
 }
 
@@ -163,4 +126,10 @@ void UAC_CharacterStats::OnCharacterDeath_Event()
 	ACharacter* _owner = Cast<ACharacter>(GetOwner());
 	UAC_PhysicsComponent* _physComp = _owner->FindComponentByClass<UAC_PhysicsComponent>();
 	_physComp->ToRagdoll();
+
+	AAIController* aiController = Cast<AAIController>(GetOwner()->GetInstigatorController());
+	if (aiController) {
+		aiController->GetBrainComponent()->StopLogic("IsDead");
+		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, "Here");
+	}
 }

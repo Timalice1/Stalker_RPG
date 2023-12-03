@@ -29,7 +29,7 @@ public:
 	void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable)
-	void AddImpulse(FName BoneName, FVector Velocity, float ImpulseStrenght = 2000.f, float RecoverySpeed = .001f);
+	void AddImpulse(FName BoneName, FVector Velocity, float ImpulseStrenght = 2000.f, float RecoverInterpolationSpeed = .1f);
 
 	UFUNCTION()
 	void ToRagdoll();
@@ -43,7 +43,7 @@ public:
 private:
 
 	UFUNCTION()
-	void DecreaseImpulse();
+	void DecreaseImpulse(float InterpolationSpeed);
 
 protected:
 
